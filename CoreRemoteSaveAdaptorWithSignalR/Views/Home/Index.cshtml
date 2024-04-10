@@ -1,0 +1,73 @@
+﻿<ejs-grid id="Grid" allowPaging="true" allowSorting="true" allowFiltering="true" created="created"
+    toolbar="@(new List<string>() { "Add", "Edit", "Delete","Update","Cancel" })">
+    <e-data-manager adaptor="RemoteSaveAdaptor" insertUrl="/Home/Insert" updateUrl="/Home/Update"
+        removeUrl="/Home/Delete"></e-data-manager>
+    <e-grid-editSettings allowAdding="true" allowEditing="true" allowDeleting="true"></e-grid-editSettings>
+    <e-grid-filterSettings allowAdding="true" allowEditing="true" allowDeleting="true"></e-grid-filterSettings>
+    <e-grid-columns>
+        <e-grid-column field="OrderID" headerText="Order ID" width="120" textAlign="Right" isPrimaryKey="true"
+            validationRules="@(new { required= true })"></e-grid-column>
+        <e-grid-column field="CustomerID" headerText="Customer ID" width="150"
+            validationRules="@(new { required= true })"></e-grid-column>
+        <e-grid-column field="Freight" headerText="Freight" width="120" format="C2" textAlign="Right"
+            validationRules="@(new { required= true })"></e-grid-column>
+        <e-grid-column field="ShipCity" headerText="Ship City" width="150"
+            validationRules="@(new { required= true })"></e-grid-column>
+    </e-grid-columns>
+</ejs-grid>
+
+<script>
+    let grid;
+
+    // triggers when Grid is created
+    function created() {
+        grid = document.getElementById('Grid').ej2_instances[0]
+        // begin fetching data for initial render
+        fetchData();
+    }
+
+    // creating instance of signalR connection builder
+    // CDN reference added in "Shared/_Layout.cshtml" head tag
+    var connection = new signalR.HubConnectionBuilder()
+        .withUrl("/gridUpdateHub")
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+    // start the connection
+    connection.start().then(function () {
+        console.log("SignalR connected.");
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    // notification listener for server update
+    connection.on("ReceiveGridUpdate", function () {
+        // reload the data from server and bind to the Grid
+        fetchData();
+    });
+
+
+    // fetching data and bind it to the Grid via RemoteSaveAdaptor
+    // call this method every time data reload needed
+    async function fetchData() {
+        // Base API URL
+        const baseURL = "Home/RemoteSaveDataSource";
+
+        // fetching data from server using fetch request
+        const response = await fetch(baseURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        });
+
+        // await the response data
+        const data = await response.json();
+
+        // bind the fetched data to the Grid dataSource
+        grid.dataSource.dataSource.json = data;
+
+        // refresh the Grid to populate the Grid with new data
+        grid.refresh();
+    }
+</script>
