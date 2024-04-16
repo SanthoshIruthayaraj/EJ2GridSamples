@@ -1,4 +1,10 @@
-# Prerequisites
+# ASP.NET Core & MVC
 **/bin/
 **/obj/
 **/.vs/
+
+# Angular
+**/.angular
+**/node_modules
+**/obj
+**/package-lock.json
